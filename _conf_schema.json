@@ -1,0 +1,10 @@
+{
+    "server_url": {
+      "description": "服务器地址",
+      "type": "string",
+      "hint": "填写服务器的完整地址，例如：http://192.168.1.100:5000",
+      "default": "http://localhost:5000",
+      "obvious_hint": true
+    }
+  }
+  
