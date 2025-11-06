@@ -12,8 +12,7 @@ import aiohttp
 import json
 import os
 import traceback
-
-@register("nikki_s", "Lynn", "秘密", "1.0.12")
+@register("nikki_s", "Lynn", "秘密", "1.0.3")
 class MyPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig = None):
         super().__init__(context)
@@ -22,8 +21,9 @@ class MyPlugin(Star):
         self.config = config or {}
         self.server_url = self.config.get("server_url", "http://localhost:5000")
         
-        # 本地配置文件路径
-        self.config_file = os.path.join(context.base_path, "config.json")
+        # 本地配置文件路径（使用当前插件目录）
+        plugin_dir = os.path.dirname(os.path.abspath(__file__))
+        self.config_file = os.path.join(plugin_dir, "config.json")
         
         # 地点列表
         self.locations = [
@@ -40,9 +40,11 @@ class MyPlugin(Star):
         
         # 打印配置信息
         logger.info(f"✓ 服务器地址: {self.server_url}")
+        logger.info(f"✓ 配置文件路径: {self.config_file}")
         
         # 初始化：从服务器拉取配置
         context.register_task(self._init_config(), "初始化配置")
+
     
     async def _init_config(self):
         """初始化：从服务器拉取配置文件到本地"""
@@ -277,6 +279,90 @@ class MyPlugin(Star):
             msg = f"✗ {message}"
         
         yield event.plain_result(msg)
+    @filter.command("还原")
+    async def fav_list_restore(self, event: AstrMessageEvent):
+        """从服务器重新拉取配置"""
+        try:
+            await event.send(event.plain_result("正在从服务器拉取配置..."))
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.get(f"{self.server_url}/config") as resp:
+                    if resp.status == 200:
+                        config = await resp.json()
+                        self._save_local_config(config)
+                        
+                        favorites = config.get("favorites", [])
+                        if favorites:
+                            msg = f"✓ 配置已还原！\n当前关注列表（{len(favorites)}个）：\n"
+                            for idx, location in enumerate(favorites, 1):
+                                msg += f"{idx}. {location}\n"
+                            msg = msg.strip()
+                        else:
+                            msg = "✓ 配置已还原！\n当前关注列表为空"
+                        
+                        yield event.plain_result(msg)
+                    else:
+                        yield event.plain_result(f"✗ 服务器返回错误: {resp.status}")
+        except Exception as e:
+            logger.error(f"✗ 还原配置失败: {e}")
+            yield event.plain_result(f"✗ 还原失败: {str(e)}")
+
+        @filter.command("帮助")
+        async def show_help(self, event: AstrMessageEvent):
+            """显示帮助信息"""
+            help_text = """
+        📖 插件 - 帮助
+
+        ━━━━━━━━━━━━━━━━━━━━━━
+        📋 管理命令：
+
+        • 关注列表
+        查看当前关注的地点列表
+
+        • 增加 [序号]
+        添加关注地点
+        示例：增加 5
+        或直接发送「增加」进入选择模式
+
+        • 删除 [序号]
+        删除关注地点
+        示例：删除 2
+        或直接发送「删除」进入选择模式
+
+        • 清空
+        清空所有关注地点
+
+        ━━━━━━━━━━━━━━━━━━━━━━
+        💾 配置同步命令：
+
+        • 保存
+        将本地配置同步到服务器
+        ⚠️ 修改关注列表后需要保存
+
+        • 还原
+        从服务器重新拉取配置
+        用于恢复或同步配置
+
+        ━━━━━━━━━━━━━━━━━━━━━━
+        📍 地点（共27个）：
+
+        花田民居、村口集市、染织工坊、落石谷
+        悠悠草坡、虫鸣花坡、绿野活动区、绿野码头
+        女王行宫遗迹、边境哨所、溪声林地、巨树河谷
+        陨愿山岭、曙光山地、镇郊林区、湖畔街区
+        大许愿树广场、栖愿遗迹、福鸣瀑布、麦浪农场
+        欢乐市集、乘风磨坊、涟漪庄园、星空钓场
+        石之冠、丰饶古村、呜呜车站
+
+        ━━━━━━━━━━━━━━━━━━━━━━
+        💡 使用提示：
+        • 网页端查看：{server_url}
+        • 修改关注后记得「保存」
+        • 操作超时时间：{timeout}秒
+        ━━━━━━━━━━━━━━━━━━━━━━
+            """.format(server_url=self.server_url, timeout=self.timeout).strip()
+            
+            yield event.plain_result(help_text)
 
     async def terminate(self):
         """插件卸载时的清理工作"""
