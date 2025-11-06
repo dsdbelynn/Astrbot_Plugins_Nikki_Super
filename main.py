@@ -1,15 +1,18 @@
-from astrbot.api.event import filter, AstrMessageEvent, MessageEventResult
+from astrbot.api.event import filter, AstrMessageEvent
+import astrbot.api.message_components as Comp
 from astrbot.api.star import Context, Star, register
-from astrbot.api import logger
-from astrbot.api.event.filter import SessionController, session_waiter
-from astrbot.api.message import MessageChain
-from astrbot.api.message.components import Plain
+from astrbot.core.message.message_event_result import MessageChain
+from astrbot.core.utils.session_waiter import (
+    session_waiter,
+    SessionController,
+)
+from astrbot import logger
 import aiohttp
 import json
 import os
 import traceback
 
-@register("nikki_s", "Lynn", "秘密", "1.0.0")
+@register("nikki_s", "Lynn", "秘密", "1.0.1")
 class MyPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
@@ -31,7 +34,7 @@ class MyPlugin(Star):
         ]
         
         # 会话超时时间（秒）
-        self.timeout = 10
+        self.timeout = 60
         
         # 初始化：从服务器拉取配置
         context.register_task(self._init_config(), "初始化配置")
@@ -111,7 +114,7 @@ class MyPlugin(Star):
         yield event.plain_result(msg)
 
     @filter.command("增加")
-    async def fav_list_add(self, event: AstrMessageEvent, message: str):
+    async def fav_list_add(self, event: AstrMessageEvent):
         """添加关注地点"""
         # 解析参数
         args = event.message_str.replace("增加", "").strip().split()
@@ -181,7 +184,7 @@ class MyPlugin(Star):
         event.stop_event()
 
     @filter.command("删除")
-    async def fav_list_del(self, event: AstrMessageEvent, message: str):
+    async def fav_list_del(self, event: AstrMessageEvent):
         """删除关注地点"""
         config = self._load_local_config()
         favorites = config.get("favorites", [])
