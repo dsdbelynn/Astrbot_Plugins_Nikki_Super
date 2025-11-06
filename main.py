@@ -12,7 +12,7 @@ import aiohttp
 import json
 import os
 import traceback
-@register("nikki_s", "Lynn", "秘密", "1.0.3")
+@register("nikki_s", "Lynn", "秘密", "1.0.4")
 class MyPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig = None):
         super().__init__(context)
@@ -307,10 +307,10 @@ class MyPlugin(Star):
             logger.error(f"✗ 还原配置失败: {e}")
             yield event.plain_result(f"✗ 还原失败: {str(e)}")
 
-        @filter.command("帮助")
-        async def show_help(self, event: AstrMessageEvent):
-            """显示帮助信息"""
-            help_text = """
+    @filter.command("帮助")
+    async def show_help(self, event: AstrMessageEvent):
+        """显示帮助信息"""
+        help_text = """
         📖 插件 - 帮助
 
         ━━━━━━━━━━━━━━━━━━━━━━
@@ -360,9 +360,8 @@ class MyPlugin(Star):
         • 修改关注后记得「保存」
         • 操作超时时间：{timeout}秒
         ━━━━━━━━━━━━━━━━━━━━━━
-            """.format(server_url=self.server_url, timeout=self.timeout).strip()
-            
-            yield event.plain_result(help_text)
+        """.format(server_url=self.server_url, timeout=self.timeout).strip()
+        yield event.plain_result(help_text)
 
     async def terminate(self):
         """插件卸载时的清理工作"""
