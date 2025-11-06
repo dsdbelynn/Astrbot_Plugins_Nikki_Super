@@ -12,14 +12,13 @@ import json
 import os
 import traceback
 
-@register("nikki_s", "Lynn", "秘密", "1.0.1")
+@register("nikki_s", "Lynn", "秘密", "1.0.12")
 class MyPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
         
-        # 从环境变量获取服务器地址
-        self.server_url = context.get_config("server_url", "http://localhost:5000")
-        
+        # 从配置获取服务器地址，如果没有则使用默认值
+        self.server_url = context.get_config("server_url")
         # 本地配置文件路径
         self.config_file = os.path.join(context.base_path, "config.json")
         
@@ -34,7 +33,7 @@ class MyPlugin(Star):
         ]
         
         # 会话超时时间（秒）
-        self.timeout = 60
+        self.timeout = 10
         
         # 初始化：从服务器拉取配置
         context.register_task(self._init_config(), "初始化配置")
