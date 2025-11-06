@@ -1,6 +1,7 @@
 from astrbot.api.event import filter, AstrMessageEvent
 import astrbot.api.message_components as Comp
 from astrbot.api.star import Context, Star, register
+from astrbot.api import AstrBotConfig
 from astrbot.core.message.message_event_result import MessageChain
 from astrbot.core.utils.session_waiter import (
     session_waiter,
@@ -14,11 +15,13 @@ import traceback
 
 @register("nikki_s", "Lynn", "秘密", "1.0.12")
 class MyPlugin(Star):
-    def __init__(self, context: Context):
+    def __init__(self, context: Context, config: AstrBotConfig = None):
         super().__init__(context)
         
         # 从配置获取服务器地址，如果没有则使用默认值
-        self.server_url = context.get_config("server_url")
+        self.config = config or {}
+        self.server_url = self.config.get("server_url", "http://localhost:5000")
+        
         # 本地配置文件路径
         self.config_file = os.path.join(context.base_path, "config.json")
         
@@ -34,6 +37,9 @@ class MyPlugin(Star):
         
         # 会话超时时间（秒）
         self.timeout = 10
+        
+        # 打印配置信息
+        logger.info(f"✓ 服务器地址: {self.server_url}")
         
         # 初始化：从服务器拉取配置
         context.register_task(self._init_config(), "初始化配置")
